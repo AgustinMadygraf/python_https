@@ -1,3 +1,5 @@
 .env
 app/routes/__pycache__/
 app/__pycache__/
+key/ssl-cert.pem
+key/ssl-key.pem

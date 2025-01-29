@@ -13,6 +13,7 @@ def home():
     return "¡Servidor Flask corriendo en HTTPS en el puerto 443!"
 
 @main_bp.route("/estatuto/dist/")
+@main_bp.route("/estatuto/")
 def estatuto():
     static_folder = os.getenv("STATIC_FOLDER")
     return send_from_directory(static_folder, "index.html")
