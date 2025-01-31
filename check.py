@@ -1,17 +1,23 @@
-# check.py
+"""
+Path: check.py
+"""
 
 import os
-import sys
 import datetime
 from dotenv import load_dotenv
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
+from app.utils.logging.logger_configurator import LoggerConfigurator
+
+logger = LoggerConfigurator().configure()
 
 def main():
     """
     Verifica el estado de los certificados SSL basados
     en las variables de entorno definidas en .env
     """
+    
+    logger.info("Iniciando verificación de certificados SSL.")
     
     # Cargar las variables de entorno
     load_dotenv()
@@ -22,45 +28,49 @@ def main():
     
     # Verificación básica: comprobar si las variables están definidas
     if not ssl_cert:
-        print("Error: La variable de entorno SSL_CERT no está definida.")
-        sys.exit(1)
+        logger.error("La variable de entorno SSL_CERT no está definida.")
+        raise SystemExit("Error: La variable de entorno SSL_CERT no está definida.")
     if not ssl_key:
-        print("Error: La variable de entorno SSL_KEY no está definida.")
-        sys.exit(1)
+        logger.error("La variable de entorno SSL_KEY no está definida.")
+        raise SystemExit("Error: La variable de entorno SSL_KEY no está definida.")
+    
+    logger.debug(f"Certificado SSL: {ssl_cert}")
+    logger.debug(f"Clave privada SSL: {ssl_key}")
     
     # Verificar si los archivos de certificado y llave existen
     if not os.path.isfile(ssl_cert):
-        print(f"Error: No se encontró el archivo de certificado en la ruta '{ssl_cert}'.")
-        sys.exit(1)
+        logger.error(f"No se encontró el archivo de certificado en la ruta '{ssl_cert}'.")
+        raise SystemExit(f"Error: No se encontró el archivo de certificado en la ruta '{ssl_cert}'.")
     if not os.path.isfile(ssl_key):
-        print(f"Error: No se encontró la llave privada en la ruta '{ssl_key}'.")
-        sys.exit(1)
+        logger.error(f"No se encontró la llave privada en la ruta '{ssl_key}'.")
+        raise SystemExit(f"Error: No se encontró la llave privada en la ruta '{ssl_key}'.")
+    
+    logger.info("Certificados encontrados. Procediendo con la verificación.")
     
     # Cargar y analizar el certificado
     try:
         with open(ssl_cert, 'rb') as cert_file:
             cert_data = cert_file.read()
             cert = x509.load_pem_x509_certificate(cert_data, default_backend())
+        logger.debug("Certificado cargado correctamente.")
     except Exception as e:
-        print(f"Error: No se pudo leer el certificado. Detalles: {e}")
-        sys.exit(1)
+        logger.error(f"No se pudo leer el certificado. Detalles: {e}")
+        raise SystemExit(f"Error: No se pudo leer el certificado. Detalles: {e}")
     
     # Verificar la fecha de expiración
-    not_after = cert.not_valid_after_utc  # Fecha con zona horaria UTC
+    not_after = cert.not_valid_after_utc
     now = datetime.datetime.now(datetime.timezone.utc)  # Convertir a zona horaria UTC
 
+    logger.info(f"📅 Fecha de expiración del certificado: {not_after}")
+
     if now > not_after:
-        print("Error: El certificado ha expirado.")
-        sys.exit(1)
+        logger.error("El certificado ha expirado.")
+        raise SystemExit("Error: El certificado ha expirado.")
     else:
-        # Podés implementar una lógica para advertir si el certificado está cerca de expirar
         days_to_expire = (not_after - now).days
         if days_to_expire < 15:
-            print(f"Advertencia: El certificado expira en {days_to_expire} día(s).")
+            logger.warning(f"⚠️ Advertencia: El certificado expira en {days_to_expire} día(s).")
         else:
-            print(f"El certificado es válido. Expira en {days_to_expire} día(s).")
-    
-    print("La verificación de los certificados finalizó sin errores.")
+            logger.info(f"✅ El certificado es válido. Expira en {days_to_expire} día(s).")
 
-if __name__ == "__main__":
-    main()
+    logger.info("✅ La verificación de los certificados finalizó sin errores.")

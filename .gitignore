@@ -3,3 +3,6 @@ app/routes/__pycache__/
 app/__pycache__/
 key/ssl-cert.pem
 key/ssl-key.pem
+docs/00-Prompt-for-ProjectAnalysis.md
+__pycache__/
+app/utils/logging/sistema.log
