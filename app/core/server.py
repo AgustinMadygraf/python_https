@@ -1,33 +1,32 @@
 """
-Path: server.py
-Este archivo es el punto de entrada del servidor Flask. Aquí se configura el logger y se inicia el servidor con verificación de certificados SSL.
+Path: app/core/server.py
+Este archivo configura el servidor Flask y ejecuta la verificación de certificados SSL antes de iniciarlo.
 """
 
 import os
 import sys
-import logging
-from app import create_app
+from app.core.app_factory import create_app
+from app.config import check
 from app.utils.logging.logger_configurator import LoggerConfigurator
 
 # Configurar logger
 logger = LoggerConfigurator().configure()
 
-logger.info("🔄 Iniciando servidor Flask con verificación de certificados SSL.")
+def start_server():
+    """Inicia el servidor Flask con SSL."""
+    logger.info("🔄 Iniciando servidor Flask con verificación de certificados SSL.")
 
-# Importar y ejecutar check.py antes de levantar el servidor
-try:
-    import check
-    logger.info("🔍 Ejecutando la verificación de certificados SSL.")
-    check.main()  # Llama a la función de verificación de certificados
-    logger.info("✅ Verificación de certificados SSL completada sin errores.")
-except SystemExit as e:
-    logger.error(f"❌ Error en la validación del certificado SSL: {e}")
-    sys.exit(1)
-except Exception as ex:
-    logger.critical(f"🔥 Error inesperado en la verificación SSL: {ex}", exc_info=True)
-    sys.exit(1)
+    # Ejecutar validación de certificados antes de levantar el servidor
+    try:
+        check.main()  # Verifica certificados SSL
+        logger.info("✅ Verificación de certificados SSL completada sin errores.")
+    except SystemExit as e:
+        logger.error(f"❌ Error en la validación del certificado SSL: {e}")
+        sys.exit(1)
+    except Exception as ex:
+        logger.critical(f"🔥 Error inesperado en la verificación SSL: {ex}", exc_info=True)
+        sys.exit(1)
 
-if __name__ == "__main__":
     logger.info("⚙️ Creando aplicación Flask.")
     app = create_app()
 
