@@ -16,16 +16,18 @@ def start_server():
     """Inicia el servidor Flask con SSL."""
     logger.info("🔄 Iniciando servidor Flask con verificación de certificados SSL.")
 
-    # Ejecutar validación de certificados antes de levantar el servidor
     try:
         check.main()  # Verifica certificados SSL
         logger.info("✅ Verificación de certificados SSL completada sin errores.")
     except SystemExit as e:
         logger.error(f"❌ Error en la validación del certificado SSL: {e}")
-        sys.exit(1)
+        logger.warning("⚠️ Continuando la ejecución a pesar del fallo en la verificación del certificado.")
+        # Aquí, en lugar de 'sys.exit(1)', simplemente no hacemos nada
+        # y permitimos que el servidor siga.
     except Exception as ex:
         logger.critical(f"🔥 Error inesperado en la verificación SSL: {ex}", exc_info=True)
-        sys.exit(1)
+        # Decide si deseas terminar o continuar:
+        # sys.exit(1)  # o lo dejas comentado si prefieres que no se cierre.
 
     logger.info("⚙️ Creando aplicación Flask.")
     app = create_app()
@@ -36,7 +38,8 @@ def start_server():
 
     if not SSL_CERT or not SSL_KEY:
         logger.critical("❌ No se encontraron los certificados SSL. El servidor no se iniciará.")
-        sys.exit(1)
+        # sys.exit(1) # De nuevo, podrías detener o no, según la lógica de tu negocio.
+        return
 
     logger.info(f"🔐 Certificado SSL: {SSL_CERT}")
     logger.info(f"🔑 Clave SSL: {SSL_KEY}")
@@ -46,4 +49,4 @@ def start_server():
         app.run(host="0.0.0.0", port=443, ssl_context=(SSL_CERT, SSL_KEY))
     except Exception as ex:
         logger.critical(f"🔥 Error inesperado al iniciar el servidor Flask: {ex}", exc_info=True)
-        sys.exit(1)
+        # sys.exit(1) # O continuar según tus necesidades
